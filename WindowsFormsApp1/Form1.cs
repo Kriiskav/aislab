@@ -1,45 +1,50 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 using Model;
+using Business_Logical;
+using DataAccessLayer;
 
 namespace WindowsFormsApp1
 {
-    /// <summary>
-    /// Форма магазина гномиков. Операции с товарами выполняет модель.
-    /// </summary>
+    /// <summary>Форма магазина.</summary>
     public partial class Form1 : Form
     {
-        private Logic logic = new Logic();
+        private Logic logic;
         private string selectedName;
+        private bool grouped;
+        private List<Product> shownProducts = new List<Product>();
 
-        /// <summary>
-        /// Создать форму и выбрать первый тип товара.
-        /// </summary>
+        /// <summary>Создать форму.</summary>
         public Form1()
         {
             InitializeComponent();
             typeComboBox.SelectedIndex = 0;
         }
 
-        /// <summary>
-        /// Проверить числовые поля формы.
-        /// </summary>
+        /// <summary>Подключить логику.</summary>
+        public Form1(Logic logic) : this()
+        {
+            this.logic = logic;
+            RefreshList();
+        }
+
+        /// <summary>Проверить числовые поля формы.</summary>
         private bool ReadNumbers(out decimal price, out int stock)
         {
             price = 0;
             stock = 0;
-            if (!decimal.TryParse(priceTextBox.Text, out price) ||
+            if (!InputParser.TryReadPrice(priceTextBox.Text, out price) ||
                 !int.TryParse(stockTextBox.Text, out stock))
             {
-                MessageBox.Show("Введите цену числом и количество целым числом.");
+                statusLabel.Text = "Введите цену (12,50 или 12.50) и целое количество.";
                 return false;
             }
             return true;
         }
 
-        /// <summary>
-        /// Добавить товар из полей ввода.
-        /// </summary>
+        /// <summary>Добавить товар из полей ввода.</summary>
         private void addButton_Click(object sender, EventArgs e)
         {
             decimal price;
@@ -49,35 +54,31 @@ namespace WindowsFormsApp1
             {
                 logic.AddProduct(nameTextBox.Text, typeComboBox.Text, sellerTextBox.Text, price, stock);
                 RefreshList();
+                statusLabel.Text = "Готово. Выберите товар для следующей операции.";
             }
             catch (ArgumentException ex)
             {
-                MessageBox.Show(ex.Message);
+                statusLabel.Text = ex.Message;
             }
         }
 
-        /// <summary>
-        /// Показать товары по типам.
-        /// </summary>
+        /// <summary>Показать товары по типам.</summary>
         private void groupButton_Click(object sender, EventArgs e)
         {
-            string result = logic.GroupByType();
-            MessageBox.Show(result == "" ? "Товаров пока нет." : result, "Группировка");
-        }
-
-        /// <summary>
-        /// Купить одну единицу выбранного товара.
-        /// </summary>
-        private void buyButton_Click(object sender, EventArgs e)
-        {
-            if (!CheckSelection()) return;
-            MessageBox.Show(logic.BuyProduct(selectedName));
+            grouped = true;
             RefreshList();
         }
 
-        /// <summary>
-        /// Изменить выбранный товар, включая название.
-        /// </summary>
+        /// <summary>Купить одну единицу выбранного товара.</summary>
+        private void buyButton_Click(object sender, EventArgs e)
+        {
+            if (!CheckSelection()) return;
+            string result = logic.BuyProduct(selectedName);
+            RefreshList();
+            statusLabel.Text = result;
+        }
+
+        /// <summary>Изменить товар.</summary>
         private void updateButton_Click(object sender, EventArgs e)
         {
             if (!CheckSelection()) return;
@@ -89,16 +90,15 @@ namespace WindowsFormsApp1
                 logic.UpdateProduct(selectedName, nameTextBox.Text, typeComboBox.Text,
                     sellerTextBox.Text, price, stock);
                 RefreshList();
+                statusLabel.Text = "Готово. Выберите товар для следующей операции.";
             }
             catch (ArgumentException ex)
             {
-                MessageBox.Show(ex.Message);
+                statusLabel.Text = ex.Message;
             }
         }
 
-        /// <summary>
-        /// Применить скидку к выбранному товару.
-        /// </summary>
+        /// <summary>Применить скидку к выбранному товару.</summary>
         private void discountButton_Click(object sender, EventArgs e)
         {
             if (!CheckSelection()) return;
@@ -108,16 +108,15 @@ namespace WindowsFormsApp1
             int percent;
             if (!int.TryParse(input, out percent))
             {
-                MessageBox.Show("Введите целое число.");
+                statusLabel.Text = "Введите целое число.";
                 return;
             }
-            MessageBox.Show(logic.ApplyDiscount(selectedName, percent));
+            string result = logic.ApplyDiscount(selectedName, percent);
             RefreshList();
+            statusLabel.Text = result;
         }
 
-        /// <summary>
-        /// Удалить выбранный товар.
-        /// </summary>
+        /// <summary>Удалить выбранный товар.</summary>
         private void buttonDelete_Click(object sender, EventArgs e)
         {
             if (!CheckSelection()) return;
@@ -125,21 +124,18 @@ namespace WindowsFormsApp1
             RefreshList();
         }
 
-        /// <summary>
-        /// Показать все данные товаров.
-        /// </summary>
+        /// <summary>Показать все данные товаров.</summary>
         private void buttonShowAll_Click(object sender, EventArgs e)
         {
-            string result = logic.GetAll();
-            MessageBox.Show(result == "" ? "Товаров пока нет." : result, "Все товары");
+            grouped = false;
+            RefreshList();
         }
 
-        /// <summary>
-        /// Заполнить поля данными выбранного товара.
-        /// </summary>
+        /// <summary>Показать выбранный товар.</summary>
         private void productsListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            selectedName = productsListBox.SelectedItem as string;
+            int index = productsListBox.SelectedIndex;
+            selectedName = index >= 0 ? shownProducts[index].Name : null;
             if (selectedName == null) return;
             Product product = logic.FindByName(selectedName);
             if (product == null) return;
@@ -150,24 +146,26 @@ namespace WindowsFormsApp1
             stockTextBox.Text = product.Stock.ToString();
         }
 
-        /// <summary>
-        /// Проверить, выбран ли товар для операции.
-        /// </summary>
+        /// <summary>Проверить выбор.</summary>
         private bool CheckSelection()
         {
             if (selectedName != null) return true;
-            MessageBox.Show("Сначала выберите товар в списке.");
+            statusLabel.Text = "Сначала выберите товар в списке.";
             return false;
         }
 
-        /// <summary>
-        /// Обновить список и очистить поля после операции.
-        /// </summary>
+        /// <summary>Обновить список.</summary>
         private void RefreshList()
         {
             selectedName = null;
             productsListBox.Items.Clear();
-            productsListBox.Items.AddRange(logic.GetNames().ToArray());
+            shownProducts = logic.GetProducts();
+            statusLabel.Text = "Товаров: " + shownProducts.Count + (grouped ? ". Группировка по типу." : ". Выберите товар для операции.");
+            if (grouped) shownProducts = shownProducts.OrderBy(p => p.Type).ThenBy(p => p.Name).ToList();
+            foreach (Product product in shownProducts)
+                productsListBox.Items.Add(product.Name + " | " + product.Type +
+                    " | гномик: " + product.SellerGnome + " | цена: " +
+                    product.Price + " | остаток: " + product.Stock);
             nameTextBox.Clear();
             sellerTextBox.Clear();
             priceTextBox.Clear();
@@ -176,4 +174,3 @@ namespace WindowsFormsApp1
         }
     }
 }
-

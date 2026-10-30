@@ -1,16 +1,14 @@
-using System;
+﻿using System;
 using Model;
+using Business_Logical;
+using DataAccessLayer;
 
 namespace Lab1_AIS
 {
-    /// <summary>
-    /// Консольное представление маркетплейса гномиков.
-    /// </summary>
+    /// <summary>Консоль магазина.</summary>
     internal class Program
     {
-        /// <summary>
-        /// Читать целое число, повторяя запрос при ошибке.
-        /// </summary>
+        /// <summary>Прочитать целое число.</summary>
         static int ReadInteger()
         {
             while (true)
@@ -23,9 +21,7 @@ namespace Lab1_AIS
             }
         }
 
-        /// <summary>
-        /// Читать цену, повторяя запрос при ошибке.
-        /// </summary>
+        /// <summary>Прочитать цену.</summary>
         static decimal ReadDecimal()
         {
             while (true)
@@ -33,21 +29,26 @@ namespace Lab1_AIS
                 string input = Console.ReadLine();
                 if (input == null) throw new OperationCanceledException();
                 decimal value;
-                if (decimal.TryParse(input, out value)) return value;
-                Console.Write("Введите число (дробная часть — по настройкам Windows): ");
+                if (InputParser.TryReadPrice(input, out value)) return value;
+                Console.Write("Введите цену, например 12,50 или 12.50: ");
             }
         }
 
-        /// <summary>
-        /// Главная точка входа для приложения.
-        /// </summary>
+        /// <summary>Главная точка входа для приложения.</summary>
         static void Main(string[] args)
         {
-            Logic logic = new Logic();
-
-            logic.AddProduct("Мятная травка", "Лечебная травка", "Бурбуля", 10, 50);
-            logic.AddProduct("Ромашковый отвар", "Отвары", "Мудрик", 25, 30);
-            logic.AddProduct("Чабрец сушёный", "Лечебная травка", "Пискун", 8, 100);
+            Logic logic;
+            try
+            {
+                logic = new Logic(RepositoryFactory.Create());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Не удалось подключиться к SQL Server LocalDB.");
+                Console.WriteLine(ex.GetBaseException().Message);
+                Console.ReadLine();
+                return;
+            }
 
             while (true)
             {
@@ -92,9 +93,7 @@ namespace Lab1_AIS
             }
         }
 
-        /// <summary>
-        /// Запросить у пользователя данные и добавить товар.
-        /// </summary>
+        /// <summary>Добавить товар.</summary>
         static void AddProduct(Logic logic)
         {
             Console.Write("Название: ");
@@ -119,9 +118,7 @@ namespace Lab1_AIS
             Console.WriteLine("Товар добавлен!");
         }
 
-        /// <summary>
-        /// Преобразовать номер выбора в название типа.
-        /// </summary>
+        /// <summary>Преобразовать номер выбора в название типа.</summary>
         static string TypeFromChoice(string choice)
         {
             if (choice == "1") return "Лечебная травка";
@@ -130,19 +127,17 @@ namespace Lab1_AIS
             throw new ArgumentException("Выберите тип от 1 до 3.");
         }
 
-        /// <summary>
-        /// Вывести список всех товаров.
-        /// </summary>
+        /// <summary>Вывести список всех товаров.</summary>
         static void ShowAll(Logic logic)
         {
             Console.WriteLine(logic.GetAll());
         }
 
-        /// <summary>
-        /// Изменить товар по названию.
-        /// </summary>
+        /// <summary>Изменить товар по названию.</summary>
         static void UpdateProduct(Logic logic)
         {
+            Console.WriteLine(logic.GetAll());
+
             Console.Write("Имя товара для изменения: ");
             string oldName = Console.ReadLine();
             Console.Write("Новое название: ");
@@ -168,40 +163,38 @@ namespace Lab1_AIS
             Console.WriteLine(ok ? "Обновлено" : "Товар не найден");
         }
 
-        /// <summary>
-        /// Удалить товар по названию.
-        /// </summary>
+        /// <summary>Удалить товар по названию.</summary>
         static void DeleteProduct(Logic logic)
         {
+            Console.WriteLine(logic.GetAll());
+
             Console.Write("Имя товара для удаления: ");
             string name = Console.ReadLine();
             bool ok = logic.DeleteProduct(name);
             Console.WriteLine(ok ? "Удалено" : "Товар не найден");
         }
 
-        /// <summary>
-        /// Показать товары, сгруппированные по типу.
-        /// </summary>
+        /// <summary>Показать товары, сгруппированные по типу.</summary>
         static void ShowGrouped(Logic logic)
         {
             Console.WriteLine(logic.GroupByType());
         }
 
-        /// <summary>
-        /// Купить одну единицу товара, уменьшив остаток.
-        /// </summary>
+        /// <summary>Купить единицу товара.</summary>
         static void BuyProduct(Logic logic)
         {
+            Console.WriteLine(logic.GetAll());
+
             Console.Write("Имя товара: ");
             string name = Console.ReadLine();
             Console.WriteLine(logic.BuyProduct(name));
         }
 
-        /// <summary>
-        /// Применить скидку к товару.
-        /// </summary>
+        /// <summary>Применить скидку к товару.</summary>
         static void ApplyDiscount(Logic logic)
         {
+            Console.WriteLine(logic.GetAll());
+
             Console.Write("Имя товара: ");
             string name = Console.ReadLine();
             Console.Write("Скидка в % (1–99): ");
@@ -210,4 +203,3 @@ namespace Lab1_AIS
         }
     }
 }
-

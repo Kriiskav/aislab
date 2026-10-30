@@ -1,4 +1,6 @@
-using System;
+﻿using System;
+using Business_Logical;
+using DataAccessLayer;
 using System.Windows.Forms;
 
 namespace WindowsFormsApp1
@@ -13,7 +15,15 @@ namespace WindowsFormsApp1
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            try
+            {
+                Application.Run(new Form1(new Logic(RepositoryFactory.Create())));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Не удалось подключиться к базе. Проверьте SQL Server Express LocalDB и строку MarketplaceDb.\n" +
+                    ex.GetBaseException().Message, "Ошибка подключения");
+            }
         }
     }
 }

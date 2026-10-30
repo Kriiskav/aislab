@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup><TargetFramework>net472</TargetFramework><OutputType>Exe</OutputType></PropertyGroup>
+<ItemGroup>
+<Reference Include="System.Configuration"/>
+<Reference Include="ClassLibrary1"><HintPath>../ClassLibrary1/bin/Debug/ClassLibrary1.dll</HintPath></Reference>
+<Reference Include="Business_Logical"><HintPath>../Business_Logical/bin/Debug/Business_Logical.dll</HintPath></Reference>
+<Reference Include="DataAccessLayer"><HintPath>../DataAccessLayer/bin/Debug/DataAccessLayer.dll</HintPath></Reference>
+<Reference Include="WindowsFormsApp1"><HintPath>../WindowsFormsApp1/bin/Debug/WindowsFormsApp1.exe</HintPath></Reference>
+<Reference Include="System.Windows.Forms"/><Reference Include="System.Drawing"/>
+<PackageReference Include="EntityFramework" Version="6.5.2"/>
+<PackageReference Include="Dapper" Version="2.1.89"/>
+</ItemGroup></Project>

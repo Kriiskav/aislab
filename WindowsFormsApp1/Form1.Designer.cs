@@ -1,4 +1,4 @@
-namespace WindowsFormsApp1
+﻿namespace WindowsFormsApp1
 {
     partial class Form1
     {
@@ -20,13 +20,11 @@ namespace WindowsFormsApp1
         private System.Windows.Forms.Button updateButton;
         private System.Windows.Forms.Button discountButton;
         private System.Windows.Forms.ListBox productsListBox;
+        private System.Windows.Forms.Label statusLabel;
         private System.Windows.Forms.Button buttonDelete;
         private System.Windows.Forms.Button buttonShowAll;
 
-        /// <summary>
-        /// Освободить все используемые ресурсы.
-        /// </summary>
-        /// <param name="disposing">истинно, если управляемый ресурс должен быть удален; иначе ложно.</param>
+        /// <summary>Освободить все используемые ресурсы.</summary>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -38,10 +36,7 @@ namespace WindowsFormsApp1
 
         #region Код, автоматически созданный конструктором форм Windows
 
-        /// <summary>
-        /// Требуемый метод для поддержки конструктора — не изменяйте
-        /// содержимое этого метода с помощью редактора кода.
-        /// </summary>
+        /// <summary>Служебные данные.</summary>
         private void InitializeComponent()
         {
             this.label1 = new System.Windows.Forms.Label();
@@ -62,6 +57,7 @@ namespace WindowsFormsApp1
             this.productsListBox = new System.Windows.Forms.ListBox();
             this.buttonDelete = new System.Windows.Forms.Button();
             this.buttonShowAll = new System.Windows.Forms.Button();
+            this.statusLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
 
             this.label1.AutoSize = true;
@@ -129,10 +125,15 @@ namespace WindowsFormsApp1
             this.discountButton.Text = "Скидка";
             this.discountButton.Click += new System.EventHandler(this.discountButton_Click);
 
+            this.productsListBox.HorizontalScrollbar = true;
             this.productsListBox.Location = new System.Drawing.Point(20, 250);
-            this.productsListBox.Size = new System.Drawing.Size(500, 200);
+            this.productsListBox.Size = new System.Drawing.Size(810, 200);
 
-            this.ClientSize = new System.Drawing.Size(550, 480);
+            this.ClientSize = new System.Drawing.Size(850, 525);
+            this.statusLabel.Location = new System.Drawing.Point(20, 465);
+            this.statusLabel.Size = new System.Drawing.Size(810, 45);
+            this.statusLabel.Text = "Добавить: заполните поля. Изменить, удалить, купить, скидка: выберите товар в списке.";
+            this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.nameTextBox);
             this.Controls.Add(this.label2);
@@ -168,5 +169,3 @@ namespace WindowsFormsApp1
         #endregion
     }
 }
-
-
